@@ -51,8 +51,8 @@ write_files:
 runcmd:
   - /usr/local/bin/configure-private-nic.sh
 
-  - mkdir -p /opt/sakuravel
-  - chown ubuntu:ubuntu /opt/sakuravel
+  - mkdir -p /home/ubuntu/sakuravel
+  - chown -R ubuntu:ubuntu /home/ubuntu/sakuravel
   # Docker EngineとCompose V2インストール
   - curl -fsSL https://get.docker.com | sh
   - systemctl enable --now docker
