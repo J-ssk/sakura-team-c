@@ -216,8 +216,7 @@ jobs:
         run: |
           ssh -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "sudo mkdir -p /opt/sakuravel && \
-             sudo chown ${DEPLOY_USER}:${DEPLOY_USER} /opt/sakuravel"
+            "mkdir -p ~/sakuravel"
 
       - name: Generate deployment .env
         env:
@@ -244,19 +243,19 @@ jobs:
         run: |
           scp -P "$DEPLOY_PORT" -i ~/.ssh/deploy_key \
             /tmp/deploy.env \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:/opt/sakuravel/.env"
+            "${DEPLOY_USER}@${DEPLOY_HOST}:~/sakuravel/.env"
           scp -P "$DEPLOY_PORT" -i ~/.ssh/deploy_key \
             deploy/deploy.sh \
             app/backend/compose.prod.yaml \
             app/backend/otel-collector.yaml \
             app/backend/Caddyfile \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:/opt/sakuravel/"
+            "${DEPLOY_USER}@${DEPLOY_HOST}:~/sakuravel/"
           scp -r -P "$DEPLOY_PORT" -i ~/.ssh/deploy_key \
             app/backend/migrations \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:/opt/sakuravel/"
+            "${DEPLOY_USER}@${DEPLOY_HOST}:~/sakuravel/"
           ssh -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "chmod 600 /opt/sakuravel/.env"
+            "chmod 600 ~/sakuravel/.env"
 
       - name: Login to registry from VM
         env:
@@ -280,5 +279,5 @@ jobs:
         run: |
           ssh -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "chmod +x /opt/sakuravel/deploy.sh && \
-             /opt/sakuravel/deploy.sh '${IMAGE_NAME}:${GITHUB_SHA}'"
+            "chmod +x ~/sakuravel/deploy.sh && \
+             ~/sakuravel/deploy.sh '${IMAGE_NAME}:${GITHUB_SHA}'"

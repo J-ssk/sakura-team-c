@@ -7,7 +7,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 IMAGE="$1"
-DEPLOY_DIR="/opt/sakuravel"
+DEPLOY_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_FILE="${DEPLOY_DIR}/compose.prod.yaml"
 
 
