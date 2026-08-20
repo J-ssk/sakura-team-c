@@ -50,6 +50,7 @@ services:
 
   otel-collector:
     image: ghcr.io/sacloud/sacloud-otel-collector:latest
+    user: "0:4"
     command: ["--config", "/etc/otel/config.yaml"]
     restart: unless-stopped
     logging:
