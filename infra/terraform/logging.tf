@@ -42,7 +42,7 @@ output "monitoring_logs_endpoint" {
 }
 
 output "monitoring_logs_token" {
-  value     = sakura_monitoring_suite_log_storage_access_key.agent.secret
+  value     = sakura_monitoring_suite_log_storage_access_key.agent.token
   sensitive = true
 }
 
@@ -51,6 +51,6 @@ output "monitoring_metrics_endpoint" {
 }
 
 output "monitoring_metrics_token" {
-  value     = sakura_monitoring_suite_metric_storage_access_key.agent.secret
+  value     = sakura_monitoring_suite_metric_storage_access_key.agent.token
   sensitive = true
 }
