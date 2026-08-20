@@ -1,10 +1,12 @@
 resource "sakura_packet_filter" "intern-team-c" {
   name        = "intern-team-c"
   description = "description"
+  zone        = var.zone
 }
 
 resource "sakura_packet_filter_rules" "intern-team-c" {
   packet_filter_id = sakura_packet_filter.intern-team-c.id
+  zone = var.zone
   expression = [{
     protocol         = "tcp"
     destination_port = "22222"
