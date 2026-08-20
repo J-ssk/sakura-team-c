@@ -119,7 +119,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEPLOY_PORT: "22222"
+      DEPLOY_PORT: "22"
 
     steps:
       - name: Checkout
