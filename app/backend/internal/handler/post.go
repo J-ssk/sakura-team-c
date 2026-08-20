@@ -18,56 +18,94 @@ func (h *Handler) GetTimeline(w http.ResponseWriter, r *http.Request) {
 	switch feed {
 	case "latest":
 		rows, err = h.DB.QueryContext(r.Context(), `
-			SELECT id, user_id, content, is_repost, original_post_id, created_at
-			FROM posts
-			WHERE parent_post_id IS NULL
-			ORDER BY created_at DESC, id DESC
-			LIMIT ? OFFSET ?
-		`, perPage, offset)
+    	    SELECT id
+    	    FROM posts
+    	    WHERE parent_post_id IS NULL
+    	    ORDER BY created_at DESC, id DESC
+    	    LIMIT ? OFFSET ?
+    	`, perPage, offset)
 	case "recommended":
 		rows, err = h.DB.QueryContext(r.Context(), `
-			SELECT p.id, p.user_id, p.content, p.is_repost, p.original_post_id, p.created_at
-			FROM posts p
-			LEFT JOIN likes l ON l.post_id = p.id AND l.created_at > NOW() - INTERVAL 24 HOUR
-			WHERE p.parent_post_id IS NULL
-			GROUP BY p.id, p.user_id, p.content, p.is_repost, p.original_post_id, p.created_at
-			ORDER BY COUNT(l.post_id) DESC, p.created_at DESC, p.id DESC
-			LIMIT ? OFFSET ?
-		`, perPage, offset)
-	default: // "following"
+    	    SELECT p.id
+    	    FROM posts p
+    	    LEFT JOIN likes l
+    	      ON l.post_id = p.id
+    	      AND l.created_at > NOW() - INTERVAL 24 HOUR
+    	    WHERE p.parent_post_id IS NULL
+    	    GROUP BY
+    	        p.id,
+    	        p.user_id,
+    	        p.content,
+    	        p.is_repost,
+    	        p.original_post_id,
+    	        p.created_at
+    	    ORDER BY
+    	        COUNT(l.post_id) DESC,
+    	        p.created_at DESC,
+    	        p.id DESC
+    	    LIMIT ? OFFSET ?
+    	`, perPage, offset)
+	default:
 		rows, err = h.DB.QueryContext(r.Context(), `
-			SELECT id, user_id, content, is_repost, original_post_id, created_at
-			FROM posts
-			WHERE parent_post_id IS NULL
-			  AND user_id IN (
-				SELECT followee_id FROM follows WHERE follower_id = ?
-			)
-			ORDER BY created_at DESC, id DESC
-			LIMIT ? OFFSET ?
-		`, myID, perPage, offset)
+    	    SELECT id
+    	    FROM posts
+    	    WHERE parent_post_id IS NULL
+    	      AND user_id IN (
+    	        SELECT followee_id
+    	        FROM follows
+    	        WHERE follower_id = ?
+    	      )
+    	    ORDER BY created_at DESC, id DESC
+    	    LIMIT ? OFFSET ?
+    	`, myID, perPage, offset)
 	}
 	if err != nil {
 		h.respondErrorWithErr(r, w, http.StatusInternalServerError, "server error", err, "feed", feed)
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
-	type postRow struct {
-		id     int64
-		userID int64
-	}
-	var rawPosts []postRow
+	var ids []int64
+
 	for rows.Next() {
-		var p postRow
-		var dummy any // content, is_repost, original_post_id, created_at
-		rows.Scan(&p.id, &p.userID, &dummy, &dummy, &dummy, &dummy)
-		rawPosts = append(rawPosts, p)
+		var id int64
+
+		if err := rows.Scan(&id); err != nil {
+			h.respondErrorWithErr(
+				r,
+				w,
+				http.StatusInternalServerError,
+				"server error",
+				err,
+			)
+			return
+		}
+
+		ids = append(ids, id)
 	}
 
-	ids := make([]int64, 0, len(rawPosts))
+	if err := rows.Err(); err != nil {
+		h.respondErrorWithErr(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"server error",
+			err,
+		)
+		return
+	}
 
-	for _, rp := range rawPosts {
-		ids = append(ids, rp.id)
+	if err := rows.Close(); err != nil {
+		h.respondErrorWithErr(
+			r,
+			w,
+			http.StatusInternalServerError,
+			"server error",
+			err,
+		)
+		return
 	}
 
 	posts, err := h.fetchPostsInBatch(r, ids, myID)
